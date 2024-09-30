@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dapatkan Alamat IP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dapatkan Alamat IP Anda</h1>
+    <p id="ip-address">Sedang memuat alamat IP...</p>
+
+    <script>
+        // Mengambil alamat IP menggunakan API eksternal
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                const ip = data.ip;
+                document.getElementById('ip-address').innerHTML = "Alamat IP Anda: " + ip;
+
+                // Mengarahkan ke halaman ip.html dengan alamat IP sebagai parameter query
+                window.location.href = `ip.html?ip=${ip}`;
+            })
+            .catch(error => {
+                document.getElementById('ip-address').innerHTML = "Terjadi kesalahan saat mengambil alamat IP.";
+                console.error('Error:', error);
+            });
+    </script>
+</body>
+</html>
