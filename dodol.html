@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lokasi Anda</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lokasi Anda</h1>
+    <p id="location"></p>
+
+    <script>
+        // Ambil lokasi dari local storage
+        const locationData = localStorage.getItem('location');
+
+        if (locationData) {
+            const { latitude, longitude, city, region, country } = JSON.parse(locationData);
+            let locationText;
+
+            if (latitude && longitude) {
+                locationText = `Latitude: ${latitude}, Longitude: ${longitude}`;
+            } else {
+                locationText = `Kota: ${city}, Wilayah: ${region}, Negara: ${country}`;
+            }
+
+            document.getElementById('location').innerHTML = locationText;
+        } else {
+            document.getElementById('location').innerHTML = "Lokasi tidak ditemukan.";
+        }
+    </script>
+</body>
+</html>

