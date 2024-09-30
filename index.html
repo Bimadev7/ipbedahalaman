@@ -21,11 +21,7 @@
         fetch('https://api.ipify.org?format=json')
             .then(response => response.json())
             .then(data => {
-                const ip = data.ip;
-                document.getElementById('ip-address').innerHTML = "Alamat IP Anda: " + ip;
-
-                // Mengarahkan ke halaman ip.html dengan alamat IP sebagai parameter query
-                window.location.href = `ip.html?ip=${ip}`;
+                document.getElementById('ip-address').innerHTML = "Alamat IP Anda: " + data.ip;
             })
             .catch(error => {
                 document.getElementById('ip-address').innerHTML = "Terjadi kesalahan saat mengambil alamat IP.";
