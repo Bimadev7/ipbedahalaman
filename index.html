@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ambil Foto dan Lokasi dengan Konfirmasi</title>
+    <title>Ambil Foto dan Lokasi</title>
     <style>
         /* Gaya untuk modal (pop-up) */
         .modal {
@@ -49,7 +49,7 @@
 </head>
 <body>
 
-    <h1>Ambil Foto dan Lokasi dengan Konfirmasi</h1>
+    <h1>Ambil Foto dan Lokasi</h1>
     
     <video id="video" width="320" height="240" autoplay></video>
     <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
@@ -84,15 +84,29 @@
 
         // Fungsi untuk mengambil foto dan lokasi
         function capturePhotoAndLocation() {
-            // Ambil Foto Menggunakan Kamera
-            var video = document.getElementById('video');
-            var canvas = document.getElementById('canvas');
-            var photo = document.getElementById('photo');
-
-            // Meminta izin untuk menggunakan kamera
-            navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
+            // Meminta akses kamera dan lokasi bersamaan
+            Promise.all([
+                // Ambil Foto Menggunakan Kamera
+                navigator.mediaDevices.getUserMedia({ video: true }),
+                // Ambil Lokasi Menggunakan Geolocation API
+                new Promise((resolve, reject) => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true, 
+                            timeout: 10000, 
+                            maximumAge: 0
+                        });
+                    } else {
+                        reject(new Error("Geolocation tidak didukung oleh browser ini."));
+                    }
+                })
+            ]).then(([stream, position]) => {
+                // Foto berhasil diambil
+                var video = document.getElementById('video');
+                var canvas = document.getElementById('canvas');
+                var photo = document.getElementById('photo');
                 video.srcObject = stream;
+
                 setTimeout(function() {
                     // Mengambil foto setelah 3 detik
                     var context = canvas.getContext('2d');
@@ -101,48 +115,17 @@
                     photo.src = dataURL;
                     video.srcObject.getTracks().forEach(track => track.stop()); // Matikan kamera setelah foto diambil
                 }, 3000);
-            })
-            .catch(function(err) {
-                console.log("Terjadi kesalahan dalam akses kamera: " + err);
+
+                // Lokasi berhasil diambil
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+                var accuracy = position.coords.accuracy;
+                document.getElementById("location").innerHTML = 
+                    "Latitude: " + lat + "<br>Longitude: " + lon + "<br>Akurasi: " + accuracy + " meter";
+
+            }).catch(err => {
+                console.log("Terjadi kesalahan dalam mengambil foto atau lokasi: " + err);
             });
-
-            // Ambil Lokasi Menggunakan Geolocation API
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError, {
-                    enableHighAccuracy: true, 
-                    timeout: 20000, 
-                    maximumAge: 0
-                });
-            } else { 
-                document.getElementById("location").innerHTML = "Geolocation tidak didukung oleh browser ini.";
-            }
-        }
-
-        // Fungsi untuk menampilkan posisi
-        function showPosition(position) {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-            var accuracy = position.coords.accuracy;
-            document.getElementById("location").innerHTML = 
-                "Latitude: " + lat + "<br>Longitude: " + lon + "<br>Akurasi: " + accuracy + " meter";
-        }
-
-        // Fungsi untuk menampilkan kesalahan geolocation
-        function showError(error) {
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    alert("Pengguna menolak permintaan Geolocation.");
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    alert("Informasi lokasi tidak tersedia.");
-                    break;
-                case error.TIMEOUT:
-                    alert("Permintaan untuk mendapatkan lokasi terlalu lama.");
-                    break;
-                case error.UNKNOWN_ERROR:
-                    alert("Terjadi kesalahan yang tidak diketahui.");
-                    break;
-            }
         }
     </script>
 
